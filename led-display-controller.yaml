@@ -1,0 +1,338 @@
+esphome:
+  name: led-display-controller
+  friendly_name: LED Display Controller
+# Project details for easy identification.
+  project:
+    name: Broeks.LED_Controller
+    version: "1.0"
+  platform: esp8266
+  board: esp01_1m
+  on_boot:
+    priority: -10
+    then:
+# Check for successful connection to HA.
+      - wait_until:
+          api.connected:
+      - logger.log: API is connected!
+
+#web_server:
+#  port: 80
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "eS8BHkUoRifrOPuNkJM6wzcq3Ki+Gh0PbFkeaUsrP84="
+
+ota:
+  password: "129fe7e65b925cdf203f6e29698a39f6"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+# Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Led-Display-Controller"
+    password: "yHfrBBZ8asHY"
+
+captive_portal:
+
+# This global and interval are used to control the display paging
+globals:
+- id: page
+  type: int
+  initial_value: "1"
+
+interval:
+- interval: 7s
+  then:
+    - lambda: |-
+        id(page) = (id(page) + 1);
+        if (id(page) > 5) {
+          id(page) = 1;
+        }
+
+# Setting up the font
+font:
+  - file: font/monobit.ttf
+    id: display_font
+    size: 16
+    glyphs:  |
+      !?"%()+*=,-_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz€@<>/
+
+# Setting up the images
+image:
+  - file: mdi:weather-cloudy
+    id: cloudy
+    resize: 16x16
+  - file: mdi:weather-sunny
+    id: sunny
+    resize: 16x16
+  - file: mdi:weather-rainy
+    id: rainy
+    resize: 16x16
+  - file: mdi:weather-partly-cloudy
+    id: partly_cloudy
+    resize: 16x16
+  - file: mdi:weather-fog
+    id: fog
+    resize: 16x16
+  - file: mdi:weather-snowy
+    id: snowy
+    resize: 16x16
+  - file: mdi:weather-lightning-rainy
+    id: lightning_rainy
+    resize: 16x16
+  - file: mdi:weather-snowy-rainy
+    id: snowy_rainy
+    resize: 16x16
+  - file: mdi:weather-partly-rainy
+    id: partly_rainy
+    resize: 16x16
+  - file: mdi:weather-partly-lightning
+    id: partly_lightning
+    resize: 16x16
+  - file: mdi:weather-lightning
+    id: lightning
+    resize: 16x16
+  - file: mdi:weather-partly-snowy-rainy
+    id: partly_snowy_rainy
+    resize: 16x16
+  - file: "img/heart.png"
+    id: aqi_1
+    type: RGBA
+    resize: 16x16
+  - file: "img/heart.png"
+    id: aqi_2
+    type: RGBA
+    resize: 16x16
+  - file: "img/neutral.png"
+    id: aqi_3
+    type: RGBA
+    resize: 16x16
+  - file: "img/sad.png"
+    id: aqi_4
+    type: RGBA
+    resize: 16x16
+  - file: "img/skull.png"
+    id: aqi_5
+    type: RGBA
+    resize: 16x16
+  - file: "img/skull.png"
+    id: aqi_6
+    type: RGBA
+    resize: 16x16
+
+# Setting up the colors
+color:
+  - id: red
+    red: 100%
+    green: 0%
+    blue: 0%
+  - id: green
+    red: 0%
+    green: 100%
+    blue: 0%
+  - id: blue
+    red: 0%
+    green: 0%
+    blue: 100%
+  - id: pink
+    red: 89%
+    green: 18%
+    blue: 92%
+  - id: yellow
+    red: 100%
+    green: 100%
+    blue: 0%
+  - id: grey
+    red: 50.2%
+    green: 50.2%
+    blue: 50.2%
+  - id: white
+    red: 100%
+    green: 100%
+    blue: 100%
+
+# Defining the led matrix
+light:
+  - platform: neopixelbus
+    variant: WS2812
+    pin: GPIO2
+    num_leds: 256
+    type: GRB
+    name: "led_matrix"
+    id: led_matrix_light
+    default_transition_length: 0s
+    color_correct: [25%, 25%, 25%]
+    restore_mode: ALWAYS_ON
+
+# Using the led matrix as a display and rendering the screens. The paging is awesome like this and will work on ANY display.
+display:
+  - platform: addressable_light
+    id: led_matrix_display
+    addressable_light_id: led_matrix_light
+    width: 16
+    height: 16
+    pixel_mapper: |-
+      if (x % 2 == 0) {
+        return (x * 16) + y;
+      }
+      return (x * 16) + (15 - y);
+    rotation: 180°
+    update_interval: 200ms
+    lambda: |-
+      switch (id(page)){
+        case 1:
+          it.rectangle(0, 0, 16, 16, Color(id(blue)));
+          it.strftime(8, -4, id(display_font), Color(id(pink)), TextAlign::TOP_CENTER, "%H:", id(ha_time).now());
+          it.strftime(9, 3, id(display_font), Color(id(pink)), TextAlign::TOP_CENTER, "%M", id(ha_time).now());
+          break;
+        case 2:
+          it.rectangle(0, 0, 16, 16, Color(id(pink)));
+          if (id(outdoor_temp).state > 0 && id(outdoor_temp).state < 10){
+            it.printf(8, -4, id(display_font), Color(id(blue)), TextAlign::TOP_CENTER, "%.1f", id(outdoor_temp).state);
+          }
+          else {
+            it.printf(8, -4, id(display_font), Color(id(blue)), TextAlign::TOP_CENTER, "%.0f", id(outdoor_temp).state);
+          }
+          it.print(8, 3, id(display_font), Color(id(blue)), TextAlign::TOP_CENTER, "°C");
+          break;
+        case 3:
+          if (id(weather).state == "cloudy"){
+            it.image(0, 0, id(cloudy), id(grey));
+          }
+          else if (id(weather).state == "clear"){
+            it.image(0, 0, id(sunny), id(yellow));
+          }
+          else if (id(weather).state == "rainy"){
+            it.image(0, 0, id(rainy), id(blue));
+          }
+          else if (id(weather).state == "partlycloudy"){
+            it.image(0, 0, id(partly_cloudy), id(yellow));
+          }
+          else if (id(weather).state == "fog"){
+            it.image(0, 0, id(fog), id(grey));
+          }
+          else if (id(weather).state == "partlycloudy-fog"){
+            it.image(0, 0, id(fog), id(grey));
+          }
+          else if (id(weather).state == "snowy"){
+            it.image(0, 0, id(snowy), id(white));
+          }
+          else if (id(weather).state == "light-snow"){
+            it.image(0, 0, id(snowy), id(white));
+          }
+          else if (id(weather).state == "partlycloudy-light-snow"){
+            it.image(0, 0, id(snowy), id(white));
+          }
+          else if (id(weather).state == "partlycloudy-snow"){
+            it.image(0, 0, id(snowy), id(white));
+          }
+          else if (id(weather).state == "snowy-rainy"){
+            it.image(0, 0, id(snowy_rainy), id(blue));
+          }
+          else if (id(weather).state == "partlycloudy-rain"){
+            it.image(0, 0, id(partly_rainy), id(blue));
+          }
+          else if (id(weather).state == "partlycloudy-light-rain"){
+            it.image(0, 0, id(partly_rainy));
+          }
+          else if (id(weather).state == "light-rain"){
+            it.image(0, 0, id(partly_rainy));
+          }
+          else if (id(weather).state == "lightning"){
+            it.image(0, 0, id(lightning));
+          }
+          else if (id(weather).state == "partlycloudy-lightning"){
+            it.image(0, 0, id(partly_lightning));
+          }
+          else {
+            it.image(0, 0, id(partly_snowy_rainy));
+          }
+          break;
+        case 4:
+          if (id(aqi).state == "1"){
+            it.image(0, 0, id(aqi_1));
+          }
+          else if (id(aqi).state == "2"){
+            it.image(0, 0, id(aqi_2));
+          }
+          else if (id(aqi).state == "3"){
+            it.image(0, 0, id(aqi_3));
+          }
+          else if (id(aqi).state == "4"){
+            it.image(0, 0, id(aqi_4));
+          }
+          else if (id(aqi).state == "5"){
+            it.image(0, 0, id(aqi_5));
+          }
+          else {
+            it.image(0, 0, id(aqi_6));
+          }
+          break;
+        case 5:
+          it.rectangle(0, 0, 16, 16, Color(id(pink)));
+          it.printf(8, 0, id(display_font), Color(id(red)), TextAlign::TOP_CENTER, "%.0f", id(petitie).state);
+          break;
+      }
+
+# Finally some text sensors indicating some default I expose for all my controllers.
+text_sensor:
+  - platform: version
+    hide_timestamp: false
+    name: "ESPHome Version"
+    entity_category: diagnostic
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+      icon: mdi:wifi
+      entity_category: diagnostic
+    ssid:
+      name: "Connected SSID"
+      icon: mdi:wifi-strength-2
+      entity_category: diagnostic
+# Some text sensor values I am getting from Home Assistant to show on the display (internal only)
+  - platform: homeassistant
+    name: "Matrix Text"
+    entity_id: input_text.led_matrix_text
+    id: led_matrix_text
+    internal: true
+  - platform: homeassistant
+    internal: true
+    id: weather
+    entity_id: sensor.buienradar_detailed_condition
+  - platform: homeassistant
+    internal: true
+    id: aqi
+    entity_id: sensor.aqi_achtertuin
+
+# Getting time from HA so I can display it
+time:
+  - platform: homeassistant
+    id: ha_time
+
+sensor:
+# Setting up a sensor to report wifi signal strength. Just because I do this for all my devices.
+  - platform: wifi_signal
+    name: "WiFi signaal"
+    id: wifi_strength
+    icon: mdi:wifi-arrow-up-down
+    update_interval: 60s
+# Some numeric sensor values I am getting from Home Assistant to show on the display (internal only)
+  - platform: homeassistant
+    internal: true
+    id: outdoor_temp
+    entity_id: sensor.weather_station_buiten_temperatuur
+  - platform: homeassistant
+    internal: true
+    id: petitie
+    entity_id: sensor.aantal_ondertekenaars_petitie    
+
+# Exposing buttons to HA.
+button:
+  - platform: restart
+    name: "Restart"
