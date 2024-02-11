@@ -1,4 +1,4 @@
-# Led_Display_Controller
+# Led Display Controller
 <i>A 16x16 LED matrix controller using an ESP8266 in ESPHome</i>
 
 A little while ago I stumbled across a 16x16 LED (16cm x 16cm) panel on Temu. It had a WS2812B controller embedded (which turned out to be supported by ESPHome) and was cheap, so I simply could not ignore it. This repo is for all you out there who want to either have a laugh or maybe get something useful out of it. There was a big learning curve for me and I had a great time setting this up.
