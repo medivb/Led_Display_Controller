@@ -15,6 +15,7 @@ The display can consume quite some power, which is why I went a little overboard
 <br>
 I added my yaml which contains a lot of comments and is therefore pretty self explanatory.<br>
 <br>
-![Endresult_2](https://github.com/medivb/Led_Display_Controller/assets/69627753/5292b63d-db01-4580-b2f6-5d81bdd75a1e)
+Some pictures of the final result:<br>
+![Endresult_2](https://github.com/medivb/Led_Display_Controller/assets/69627753/5292b63d-db01-4580-b2f6-5d81bdd75a1e)<br>
 ![Endresult_1](https://github.com/medivb/Led_Display_Controller/assets/69627753/e019a00e-dc2d-4148-b4fb-d1151258523a)
 
