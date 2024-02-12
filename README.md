@@ -13,7 +13,7 @@ A little while ago I stumbled across a 16x16 LED (16cm x 16cm) panel on Temu. It
 </ul>
 The display can consume quite some power, which is why I went a little overboard on that. This setup works great and as it turns out, I am only using 25% brightness, so that reduces the max power consumption a lot.<br>
 <br>
-I added my yaml which contains a lot of comments and is therefore pretty self explanatory.<br>
+I added the font I used and my yaml, which contains a lot of comments and is therefore pretty self explanatory.<br>
 <br>
 Some pictures of the final result:<br>
 ![Endresult 2](Endresult_2.jpg)<br>
